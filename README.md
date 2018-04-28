@@ -1,7 +1,7 @@
 # get-system-fonts
 
-[![Travis CI build status](https://travis-ci.org/princjef/get-system-fonts.svg?branch=dev)](https://travis-ci.org/princjef/get-system-fonts)
-[![codecov](https://codecov.io/gh/princjef/get-system-fonts/branch/dev/graph/badge.svg)](https://codecov.io/gh/princjef/get-system-fonts)
+[![Travis CI build status](https://travis-ci.org/princjef/get-system-fonts.svg?branch=master)](https://travis-ci.org/princjef/get-system-fonts)
+[![codecov](https://codecov.io/gh/princjef/get-system-fonts/branch/master/graph/badge.svg)](https://codecov.io/gh/princjef/get-system-fonts)
 [![npm version](https://img.shields.io/npm/v/get-system-fonts.svg)](https://npmjs.org/package/get-system-fonts)
 
 List full paths to all of the system fonts present. Uses [fast-glob][] to
