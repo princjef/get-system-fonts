@@ -25,9 +25,11 @@ stages:
 jobs:
   include:
     - stage: commitlint
+      node_js: '8'
       script: commitlint-travis
     - stage: test
       script: npm test
       after_success: npm run coverage
     - stage: release
+      node_js: '8'
       script: npm run release
