@@ -1,0 +1,10 @@
+node_modules/
+.nyc_output/
+.vscode/
+coverage/
+
+src/
+dist/**/*.spec.js*
+
+*.tgz
+npm-debug.log*
