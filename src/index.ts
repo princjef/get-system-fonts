@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as os from 'os';
-import * as fastGlob from 'fast-glob';
+
+import recursiveWalk from './recursiveWalk';
 
 const directories: { [K in NodeJS.Platform]?: () => string[]; } = {
     win32: () => {
@@ -73,16 +74,7 @@ function getSystemFonts(options?: Options): Promise<string[]> {
 
     const dirs = getDirs();
 
-    return fastGlob.async(
-        [...dirs, ...opts.additionalFolders]
-            .map(dir => path.join(dir, `**/*.{${opts.extensions.join(',')}}`)),
-        {
-            followSymlinkedDirectories: true,
-            onlyFiles: true,
-            unique: true,
-            absolute: true
-        }
-    );
+    return recursiveWalk([...dirs, ...opts.additionalFolders], opts.extensions);
 }
 
 module.exports = Object.assign(getSystemFonts, { default: getSystemFonts });

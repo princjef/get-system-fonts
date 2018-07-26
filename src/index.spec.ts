@@ -3,9 +3,9 @@ import * as sinon from 'sinon';
 
 import * as os from 'os';
 import * as path from 'path';
-import * as fastGlob from 'fast-glob';
 
 import getSystemFonts from '.';
+import * as recursiveWalkAll from './recursiveWalk';
 
 const win32Join = path.win32.join;
 const posixJoin = path.posix.join;
@@ -25,17 +25,15 @@ function setPlatform(platform: NodeJS.Platform, homedir?: string) {
     };
 }
 
-test.before(() => {
-    // NOTE: the actual behavior will not be to return the globs we provide.
+test.beforeEach(() => {
+    // NOTE: the actual behavior will not be to return the folders we provide.
     // This is only done to ease testing without being dependent on a certain
     // filesystem configuration.
-    sinon.stub(fastGlob, 'async').callsFake(
-        (patterns: string[]) => Promise.resolve(patterns)
-    );
+    sinon.stub(recursiveWalkAll, 'default').callsFake(async dirs => dirs);
 });
 
-test.after(() => {
-    (fastGlob.async as sinon.SinonStub).restore();
+test.afterEach(() => {
+    (recursiveWalkAll.default as sinon.SinonStub).restore();
 });
 
 test('win32: uses the value of WINDIR to find the fonts', async t => {
@@ -46,8 +44,13 @@ test('win32: uses the value of WINDIR to find the fonts', async t => {
     try {
         t.deepEqual(
             await getSystemFonts(),
-            ['D:\\Users\\someuser\\Fonts\\**\\*.{ttf,otf,ttc,woff,woff2}']
+            ['D:\\Users\\someuser\\Fonts']
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            ['D:\\Users\\someuser\\Fonts'],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
         process.env.WINDIR = originalWindir;
@@ -62,8 +65,13 @@ test('win32: falls back to C:\\Windows when WINDIR is not present', async t => {
     try {
         t.deepEqual(
             await getSystemFonts(),
-            ['C:\\Windows\\Fonts\\**\\*.{ttf,otf,ttc,woff,woff2}']
+            ['C:\\Windows\\Fonts']
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            ['C:\\Windows\\Fonts'],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
         process.env.WINDIR = originalWindir;
@@ -77,13 +85,24 @@ test('darwin: includes the right paths', async t => {
         t.deepEqual(
             await getSystemFonts(),
             [
-                '/Users/someuser/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/Network/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/System/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/System Folder/Fonts/**/*.{ttf,otf,ttc,woff,woff2}'
+                '/Users/someuser/Library/Fonts',
+                '/Library/Fonts',
+                '/Network/Library/Fonts',
+                '/System/Library/Fonts',
+                '/System Folder/Fonts'
             ]
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                '/Users/someuser/Library/Fonts',
+                '/Library/Fonts',
+                '/Network/Library/Fonts',
+                '/System/Library/Fonts',
+                '/System Folder/Fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
     }
@@ -96,12 +115,22 @@ test('darwin: omits folders under the home if no home is present', async t => {
         t.deepEqual(
             await getSystemFonts(),
             [
-                '/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/Network/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/System/Library/Fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/System Folder/Fonts/**/*.{ttf,otf,ttc,woff,woff2}'
+                '/Library/Fonts',
+                '/Network/Library/Fonts',
+                '/System/Library/Fonts',
+                '/System Folder/Fonts'
             ]
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                '/Library/Fonts',
+                '/Network/Library/Fonts',
+                '/System/Library/Fonts',
+                '/System Folder/Fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
     }
@@ -114,12 +143,22 @@ test('linux: includes the right paths', async t => {
         t.deepEqual(
             await getSystemFonts(),
             [
-                '/usr/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/usr/local/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/home/someuser/.fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/home/someuser/.local/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}'
+                '/usr/share/fonts',
+                '/usr/local/share/fonts',
+                '/home/someuser/.fonts',
+                '/home/someuser/.local/share/fonts'
             ]
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                '/usr/share/fonts',
+                '/usr/local/share/fonts',
+                '/home/someuser/.fonts',
+                '/home/someuser/.local/share/fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
     }
@@ -132,10 +171,18 @@ test('linux: omits folders under the home if no home is present', async t => {
         t.deepEqual(
             await getSystemFonts(),
             [
-                '/usr/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/usr/local/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}'
+                '/usr/share/fonts',
+                '/usr/local/share/fonts'
             ]
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                '/usr/share/fonts',
+                '/usr/local/share/fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
     }
@@ -148,12 +195,22 @@ test('supports user-defined extension list', async t => {
         t.deepEqual(
             await getSystemFonts({ extensions: ['ttf','otf'] }),
             [
-                '/usr/share/fonts/**/*.{ttf,otf}',
-                '/usr/local/share/fonts/**/*.{ttf,otf}',
-                '/home/someuser/.fonts/**/*.{ttf,otf}',
-                '/home/someuser/.local/share/fonts/**/*.{ttf,otf}'
+                '/usr/share/fonts',
+                '/usr/local/share/fonts',
+                '/home/someuser/.fonts',
+                '/home/someuser/.local/share/fonts'
             ]
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                '/usr/share/fonts',
+                '/usr/local/share/fonts',
+                '/home/someuser/.fonts',
+                '/home/someuser/.local/share/fonts'
+            ],
+            ['ttf', 'otf']
+        ));
     } finally {
         restore();
     }
@@ -178,14 +235,26 @@ test('allows extra directories to be provided', async t => {
         t.deepEqual(
             await getSystemFonts({ additionalFolders: ['/some/extra/dir', '/another/dir'] }),
             [
-                '/usr/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/usr/local/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/home/someuser/.fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/home/someuser/.local/share/fonts/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/some/extra/dir/**/*.{ttf,otf,ttc,woff,woff2}',
-                '/another/dir/**/*.{ttf,otf,ttc,woff,woff2}'
+                '/usr/share/fonts',
+                '/usr/local/share/fonts',
+                '/home/someuser/.fonts',
+                '/home/someuser/.local/share/fonts',
+                '/some/extra/dir',
+                '/another/dir'
             ]
         );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                '/usr/share/fonts',
+                '/usr/local/share/fonts',
+                '/home/someuser/.fonts',
+                '/home/someuser/.local/share/fonts',
+                '/some/extra/dir',
+                '/another/dir'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
     } finally {
         restore();
     }

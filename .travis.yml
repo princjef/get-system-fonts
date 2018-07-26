@@ -4,7 +4,6 @@ cache:
     # https://twitter.com/maybekatz/status/905213355748720640
     - ~/.npm
 node_js:
-  - '6'
   - '8'
   - '9'
   - '10'
