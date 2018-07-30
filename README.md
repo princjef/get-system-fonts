@@ -42,5 +42,3 @@ default export.*
 Want to contribute to the project? Go check out the [Contribution 
 Guide](CONTRIBUTING.md) for instructions to set up your development 
 environment, open an issue and create a pull request.
-
-[fast-glob]: https://github.com/mrmlnc/fast-glob
