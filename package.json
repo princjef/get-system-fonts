@@ -1,6 +1,6 @@
 {
   "name": "get-system-fonts",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "List full paths to all system fonts",
   "homepage": "https://github.com/princjef/get-system-fonts#readme",
   "repository": {
