@@ -4,8 +4,7 @@
 [![codecov](https://codecov.io/gh/princjef/get-system-fonts/branch/master/graph/badge.svg)](https://codecov.io/gh/princjef/get-system-fonts)
 [![npm version](https://img.shields.io/npm/v/get-system-fonts.svg)](https://npmjs.org/package/get-system-fonts)
 
-List full paths to all of the system fonts present. Uses [fast-glob][] to
-quickly find the right files.
+List full paths to all of the system fonts present.
 
 ```
 npm install get-system-fonts
