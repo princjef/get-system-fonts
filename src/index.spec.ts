@@ -13,7 +13,7 @@ const posixJoin = path.posix.join;
 function setPlatform(platform: NodeJS.Platform, homedir?: string) {
     const stubs = [
         sinon.stub(os, 'platform').returns(platform),
-        sinon.stub(os, 'homedir').returns(homedir),
+        sinon.stub(os, 'homedir').returns(homedir!),
         sinon.stub(path, 'join')
             .callsFake(platform === 'win32' ? win32Join : posixJoin)
     ];
