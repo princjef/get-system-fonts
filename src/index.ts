@@ -5,10 +5,23 @@ import recursiveWalk from './recursiveWalk';
 
 const directories: { [K in NodeJS.Platform]?: () => string[]; } = {
     win32: () => {
-        if (process.env.WINDIR) {
-            return [path.join(process.env.WINDIR, 'Fonts')];
+        const globalDir = path.join(process.env.WINDIR || 'C:\\Windows', 'Fonts');
+
+        const appDataDir = 'Microsoft\\Windows\\Fonts';
+
+        let localDir: string | undefined;
+        if (process.env.LOCALAPPDATA) {
+            localDir = path.join(process.env.LOCALAPPDATA, appDataDir);
+        } else if (process.env.APPDATA) {
+            localDir = path.join(process.env.APPDATA, 'Local', appDataDir);
+        } else if (process.env.USERPROFILE) {
+            localDir = path.join(process.env.USERPROFILE, 'AppData', 'Local', appDataDir);
+        }
+
+        if (localDir) {
+            return [globalDir, localDir];
         } else {
-            return ['C:\\Windows\\Fonts'];
+            return [globalDir];
         }
     },
     darwin: () => {
