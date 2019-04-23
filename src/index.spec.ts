@@ -36,45 +36,169 @@ test.afterEach(() => {
     (recursiveWalkAll.default as sinon.SinonStub).restore();
 });
 
-test('win32: uses the value of WINDIR to find the fonts', async t => {
+test('win32: uses the value of WINDIR and LOCALAPPDATA to find the fonts', async t => {
     const restore = setPlatform('win32');
     const originalWindir = process.env.WINDIR;
+    const originalLocalAppData = process.env.LOCALAPPDATA;
     process.env.WINDIR = 'D:\\Users\\someuser';
+    process.env.LOCALAPPDATA = 'D:\\Users\\someuser\\AppData\\Local';
 
     try {
         t.deepEqual(
             await getSystemFonts(),
-            ['D:\\Users\\someuser\\Fonts']
+            [
+                'D:\\Users\\someuser\\Fonts',
+                'D:\\Users\\someuser\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ]
         );
 
         t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
-            ['D:\\Users\\someuser\\Fonts'],
+            [
+                'D:\\Users\\someuser\\Fonts',
+                'D:\\Users\\someuser\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ],
             ['ttf', 'otf', 'ttc', 'woff', 'woff2']
         ));
     } finally {
         restore();
         process.env.WINDIR = originalWindir;
+        process.env.LOCALAPPDATA = originalLocalAppData;
     }
 });
 
 test('win32: falls back to C:\\Windows when WINDIR is not present', async t => {
     const restore = setPlatform('win32');
     const originalWindir = process.env.WINDIR;
+    const originalLocalAppData = process.env.LOCALAPPDATA;
+    process.env.LOCALAPPDATA = 'D:\\Users\\someuser\\AppData\\Local';
     delete process.env.WINDIR;
 
     try {
         t.deepEqual(
             await getSystemFonts(),
-            ['C:\\Windows\\Fonts']
+            [
+                'C:\\Windows\\Fonts',
+                'D:\\Users\\someuser\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ]
         );
 
         t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
-            ['C:\\Windows\\Fonts'],
+            [
+                'C:\\Windows\\Fonts',
+                'D:\\Users\\someuser\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ],
             ['ttf', 'otf', 'ttc', 'woff', 'woff2']
         ));
     } finally {
         restore();
         process.env.WINDIR = originalWindir;
+        process.env.LOCALAPPDATA = originalLocalAppData;
+    }
+});
+
+test('win32: falls back to APPDATA if LOCALAPPDATA is not found', async t => {
+    const restore = setPlatform('win32');
+    const originalWindir = process.env.WINDIR;
+    const originalLocalAppData = process.env.LOCALAPPDATA;
+    const originalAppData = process.env.APPDATA;
+
+    process.env.WINDIR = 'D:\\Users\\someuser';
+    delete process.env.LOCALAPPDATA;
+    process.env.APPDATA = 'E:\\Users\\userwithappdata\\AppData';
+
+    try {
+        t.deepEqual(
+            await getSystemFonts(),
+            [
+                'D:\\Users\\someuser\\Fonts',
+                'E:\\Users\\userwithappdata\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ]
+        );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                'D:\\Users\\someuser\\Fonts',
+                'E:\\Users\\userwithappdata\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
+    } finally {
+        restore();
+        process.env.WINDIR = originalWindir;
+        process.env.LOCALAPPDATA = originalLocalAppData;
+        process.env.APPDATA = originalAppData;
+    }
+});
+
+test('win32: falls back to USERPROFILE if APPDATA and LOCALAPPDATA are not found', async t => {
+    const restore = setPlatform('win32');
+    const originalWindir = process.env.WINDIR;
+    const originalLocalAppData = process.env.LOCALAPPDATA;
+    const originalAppData = process.env.APPDATA;
+    const originalUserProfile = process.env.USERPROFILE;
+
+    process.env.WINDIR = 'D:\\Users\\someuser';
+    delete process.env.LOCALAPPDATA;
+    delete process.env.APPDATA;
+    process.env.USERPROFILE = 'F:\\Users\\userwithprofile';
+
+    try {
+        t.deepEqual(
+            await getSystemFonts(),
+            [
+                'D:\\Users\\someuser\\Fonts',
+                'F:\\Users\\userwithprofile\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ]
+        );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                'D:\\Users\\someuser\\Fonts',
+                'F:\\Users\\userwithprofile\\AppData\\Local\\Microsoft\\Windows\\Fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
+    } finally {
+        restore();
+        process.env.WINDIR = originalWindir;
+        process.env.LOCALAPPDATA = originalLocalAppData;
+        process.env.APPDATA = originalAppData;
+        process.env.USERPROFILE = originalUserProfile;
+    }
+});
+
+test('win32: omits local path if none of the necessary environment variables are found', async t => {
+    const restore = setPlatform('win32');
+    const originalWindir = process.env.WINDIR;
+    const originalLocalAppData = process.env.LOCALAPPDATA;
+    const originalAppData = process.env.APPDATA;
+    const originalUserProfile = process.env.USERPROFILE;
+
+    process.env.WINDIR = 'D:\\Users\\someuser';
+    delete process.env.LOCALAPPDATA;
+    delete process.env.APPDATA;
+    delete process.env.USERPROFILE;
+
+    try {
+        t.deepEqual(
+            await getSystemFonts(),
+            [
+                'D:\\Users\\someuser\\Fonts'
+            ]
+        );
+
+        t.true((recursiveWalkAll.default as sinon.SinonStub).calledOnceWithExactly(
+            [
+                'D:\\Users\\someuser\\Fonts'
+            ],
+            ['ttf', 'otf', 'ttc', 'woff', 'woff2']
+        ));
+    } finally {
+        restore();
+        process.env.WINDIR = originalWindir;
+        process.env.LOCALAPPDATA = originalLocalAppData;
+        process.env.APPDATA = originalAppData;
+        process.env.USERPROFILE = originalUserProfile;
     }
 });
 
