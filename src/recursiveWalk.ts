@@ -19,7 +19,7 @@ export default async function recursiveWalk(baseDirs: string[], extensions: stri
     await Promise.all(baseDirs.map(async baseDir => {
         const files = await recursiveWalkInternal(
             path.resolve(baseDir),
-            new RegExp(`\\.${extensions.map(ext => `(?:${ext})`).join('|')}$`)
+            new RegExp(`\\.${extensions.map(ext => `(?:${ext})`).join('|')}$`, 'i')
         );
 
         for (const file of files) {
