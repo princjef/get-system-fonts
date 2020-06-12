@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/princjef/get-system-fonts/compare/v2.0.1...v2.0.2) (2020-06-12)
+
+
+### Bug Fixes
+
+* **no:** add option to regexp ignoreCase ([#8](https://github.com/princjef/get-system-fonts/issues/8)) ([0b3271f](https://github.com/princjef/get-system-fonts/commit/0b3271f))
+
 ## [2.0.1](https://github.com/princjef/get-system-fonts/compare/v2.0.0...v2.0.1) (2019-04-23)
 
 
